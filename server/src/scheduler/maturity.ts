@@ -1,4 +1,4 @@
-import { Assets } from '../models/Assets'
+import { Assets } from '../models/assets'
 import { Record } from '../models/records'
 import dayjs from 'dayjs'
 

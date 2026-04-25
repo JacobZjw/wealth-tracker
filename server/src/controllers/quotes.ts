@@ -1,6 +1,6 @@
 import axios from 'axios'
 import * as iconv from 'iconv-lite'
-import { Assets } from '../models/Assets'
+import { Assets } from '../models/assets'
 
 interface StockQuote {
   price: number | null
