@@ -239,6 +239,15 @@ export const update = async (request, reply) => {
     const data = await Assets.update(options, {
       where: { type: params.type },
     })
+
+    // 同步更新 record 表的 alias
+    if (params.alias !== originalAsset?.alias) {
+      await Record.update(
+        { alias: options.alias },
+        { where: { type: params.type } },
+      )
+    }
+
     await Record.create({
       ...options,
       created: new Date(),
