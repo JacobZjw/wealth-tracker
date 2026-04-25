@@ -167,11 +167,6 @@ export const updateAllStockNav = async (_, reply) => {
 
         await Assets.update(updateData, { where: { type: stock.type } })
 
-        // 如果是子账户，重新计算父账户金额
-        if (stock.parent_id) {
-          await recalculateParentAmount(stock.parent_id)
-        }
-
         results.push({
           type: stock.type,
           alias: quote.name || stock.alias,
