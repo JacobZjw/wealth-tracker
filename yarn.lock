@@ -6586,6 +6586,7 @@ serialize-error@^7.0.1:
     fastify "^4.13.0"
     fastify-plugin "^5.0.1"
     fastify-xml-body-parser "^2.2.0"
+    iconv-lite "^0.6.3"
     isomorphic-fetch "^3.0.0"
     openai "^4.72.0"
     sequelize "^6.37.1"

@@ -1,6 +1,6 @@
 import axios from 'axios'
 import * as iconv from 'iconv-lite'
-import { Assets } from '../models/assets'
+import { Assets } from '../models/Assets'
 
 interface StockQuote {
   price: number | null
@@ -10,6 +10,19 @@ interface StockQuote {
 interface FundQuote {
   nav: number | null
   name: string | null
+}
+
+interface QuoteResult {
+  type: string
+  alias: string | null
+  code?: string | null
+  oldNav?: number | null
+  newNav?: number | null
+  oldAmount?: number | null
+  newAmount?: number | null
+  nameUpdated?: boolean
+  success: boolean
+  message?: string
 }
 
 // 腾讯股票API获取股票实时价格和名称
@@ -122,7 +135,7 @@ export const updateAllStockNav = async (_, reply) => {
       },
     })
 
-    const results = []
+    const results: QuoteResult[] = []
 
     for (const stock of stocks) {
       if (!stock.code) {
@@ -198,7 +211,7 @@ export const updateAllFundNav = async (_, reply) => {
       },
     })
 
-    const results = []
+    const results: QuoteResult[] = []
 
     for (const fund of funds) {
       if (!fund.code) {

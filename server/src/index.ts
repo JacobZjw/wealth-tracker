@@ -226,7 +226,7 @@ const loadServerModules = async () => {
     import('./models'),
     import('./models/customCurrency'),
     import('./models/userSettings'),
-    import('./models/assets'),
+    import('./models/Assets'),
     import('./models/records'),
     import('./models/insights'),
     import('./models/password'),

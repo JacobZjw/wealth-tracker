@@ -28,7 +28,8 @@
       "Bash(awk '{print $5}')",
       "Bash(pnpm install *)",
       "Bash(powershell -Command \"Get-Process -Name node -ErrorAction SilentlyContinue | Stop-Process -Force\")",
-      "Bash(curl -s http://localhost:8888/api/quotes/stock/600519)"
+      "Bash(curl -s http://localhost:8888/api/quotes/stock/600519)",
+      "Bash(yarn build *)"
     ]
   }
 }

@@ -1,24 +1,7 @@
-import { Assets } from '../models/assets'
+import { Assets } from '../models/Assets'
 import { Record } from '../models/records'
 import dayjs from 'dayjs'
 
-// 重新计算父账户金额
-const recalculateParentAmount = async (parentId: string) => {
-  if (!parentId) return
-
-  const subAccounts = await Assets.findAll({
-    where: { parent_id: parentId },
-  })
-
-  const totalAmount = subAccounts.reduce((sum: number, acc: any) => {
-    return sum + Number(acc.amount || 0)
-  }, 0)
-
-  await Assets.update(
-    { amount: totalAmount, updated: new Date() },
-    { where: { type: parentId } },
-  )
-}
 
 export const processMaturedDeposits = async () => {
   const today = dayjs().format('YYYY-MM-DD')
@@ -116,7 +99,7 @@ export const processMaturedDeposits = async () => {
     }
 
     return { processed: maturedAssets.length }
-  } catch (err) {
+  } catch (err: any) {
     console.error('处理到期定期存款时出错:', err)
     return { processed: 0, error: err.message }
   }

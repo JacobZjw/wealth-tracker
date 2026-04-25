@@ -1,4 +1,4 @@
-import { Assets } from './../models/assets'
+import { Assets } from './../models/Assets'
 import { Record } from './../models/records'
 import dayjs from 'dayjs'
 
@@ -214,7 +214,7 @@ export const getParentAccounts = async (_, reply) => {
     const data = await Assets.findAll({
       where: {
         asset_type: 'GENERIC',
-        parent_id: null,
+        parent_id: null as unknown as string,
       },
     })
     return reply.send(data)
