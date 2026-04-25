@@ -6,7 +6,7 @@ client/deploy.sh
 server/deploy.sh
 deploy2server.sh
 release2docker.sh
-
+data/wealth_tracker.sqlite
 # Client assets
 client/dist
 client/.env

@@ -1,6 +1,7 @@
 import axios from 'axios'
 import * as iconv from 'iconv-lite'
-import { Assets } from '../models/Assets'
+import { Assets } from '../models/assets'
+import { recalculateParentAmount } from './assets'
 
 interface StockQuote {
   price: number | null
@@ -166,6 +167,11 @@ export const updateAllStockNav = async (_, reply) => {
 
         await Assets.update(updateData, { where: { type: stock.type } })
 
+        // 如果是子账户，重新计算父账户金额
+        if (stock.parent_id) {
+          await recalculateParentAmount(stock.parent_id)
+        }
+
         results.push({
           type: stock.type,
           alias: quote.name || stock.alias,
@@ -241,6 +247,11 @@ export const updateAllFundNav = async (_, reply) => {
         }
 
         await Assets.update(updateData, { where: { type: fund.type } })
+
+        // 如果是子账户，重新计算父账户金额
+        if (fund.parent_id) {
+          await recalculateParentAmount(fund.parent_id)
+        }
 
         results.push({
           type: fund.type,

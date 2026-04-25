@@ -24,7 +24,7 @@
 
 {#if $alert}
   <div
-    class="z-100 fixed right-1/2 top-16 z-50 mb-4 flex w-max translate-x-2/4 items-center space-x-2 rounded-lg bg-white p-4 shadow"
+    class="fixed right-1/2 top-16 z-[9999] mb-4 flex w-max translate-x-2/4 items-center space-x-2 rounded-lg bg-white p-4 shadow"
     role="alert"
     id="alert-info"
     transition:fade={{ delay: 100, duration: 300 }}>

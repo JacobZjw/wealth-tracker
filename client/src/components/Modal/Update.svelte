@@ -232,8 +232,7 @@
   const closeModal = () => {
     modal.hide()
     modal = null
-    dispatch('close')
-  }
+s  }
 
   const onConfirmClick = () => {
     if (!items.alias || !items.alias.trim()) {

@@ -40,6 +40,11 @@
     return type ? $_(`assetTypes.${type.key}`) : ''
   }
 
+  const formatAmount = (amount) => {
+    if (amount === null || amount === undefined) return '0.00'
+    return Number(amount).toFixed(2)
+  }
+
   export let options = []
   let typeSortOrder = 'none'
   let sortedOptions = []
@@ -221,7 +226,7 @@
               class="text-brand border-brand me-1 inline-flex items-center rounded-sm border bg-yellow-50 px-1 py-0.5 text-xs font-medium">
               {getCurrencySymbol(item.currency, $customCurrencies)}
             </span>
-            {item.amount}
+            {formatAmount(item.amount)}
           </TableBodyCell>
           <TableBodyCell>{getCurrencyName(item.currency) + ($language ? '' : '')}</TableBodyCell>
           <TableBodyCell>
@@ -268,7 +273,7 @@
                   class="text-brand border-brand me-1 inline-flex items-center rounded-sm border bg-yellow-50 px-1 py-0.5 text-xs font-medium">
                   {getCurrencySymbol(subItem.currency, $customCurrencies)}
                 </span>
-                {subItem.amount}
+                {formatAmount(subItem.amount)}
               </TableBodyCell>
               <TableBodyCell>{getCurrencyName(subItem.currency)}</TableBodyCell>
               <TableBodyCell>
@@ -307,7 +312,7 @@
               class="text-brand border-brand me-1 inline-flex items-center rounded-sm border bg-yellow-50 px-1 py-0.5 text-xs font-medium">
               {getCurrencySymbol($targetCurrencyCode, $customCurrencies)}
             </span>
-            {$totalAssetValue}
+            {formatAmount($totalAssetValue)}
           </strong>
         </TableBodyCell>
         <TableBodyCell>

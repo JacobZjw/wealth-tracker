@@ -1,4 +1,4 @@
-import { Assets } from './../models/Assets'
+import { Assets } from './../models/assets'
 import { Record } from './../models/records'
 import dayjs from 'dayjs'
 
@@ -26,7 +26,7 @@ const calculateAmount = (assetType: string, params: any): number => {
 }
 
 // 重新计算父账户金额
-const recalculateParentAmount = async (parentId: string) => {
+export const recalculateParentAmount = async (parentId: string) => {
   if (!parentId) return
 
   const subAccounts = await Assets.findAll({
