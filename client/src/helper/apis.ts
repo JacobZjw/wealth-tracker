@@ -12,6 +12,18 @@ export const getAssets = (data = {}) => {
   return $ajax.get(genApiPath('assets'), data)
 }
 
+export const getAssetsWithSubAccounts = () => {
+  return $ajax.get(genApiPath('assets'), { include_sub: 'true' })
+}
+
+export const getParentAccounts = () => {
+  return $ajax.get(genApiPath('assets/parents'), {})
+}
+
+export const getSubAccounts = (parentId: string) => {
+  return $ajax.get(genApiPath(`assets/${parentId}/subaccounts`), {})
+}
+
 export const updateAssets = (data) => {
   return $ajax.put(genApiPath('assets'), data)
 }
@@ -98,4 +110,20 @@ export const updateCustomCurrency = (id, data) => {
 
 export const deleteCustomCurrency = (id) => {
   return $ajax.delete(genApiPath(`currencies/${id}`), {})
+}
+
+export const getStockPrice = (code: string) => {
+  return $ajax.get(genApiPath(`quotes/stock/${code}`), {})
+}
+
+export const updateAllStockNav = () => {
+  return $ajax.post(genApiPath('quotes/stocks/update'), {})
+}
+
+export const getFundNav = (code: string) => {
+  return $ajax.get(genApiPath(`quotes/fund/${code}`), {})
+}
+
+export const updateAllFundNav = () => {
+  return $ajax.post(genApiPath('quotes/funds/update'), {})
 }

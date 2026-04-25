@@ -7,11 +7,13 @@
   import InputTag from '../InputTag.svelte'
   import SvgIcon from '../SvgIcon.svelte'
   import CustomSelect from './../Select.svelte'
-  import { createAssets, updateAssets, updateRecords } from './../../helper/apis'
+  import { createAssets, updateAssets, updateRecords, getParentAccounts } from './../../helper/apis'
   import {
     ACTION_TYPES,
     ASSETS_RISK_ARR,
     ASSETS_LIQUIDITY_ARR,
+    ASSET_TYPES,
+    TERM_MONTHS_OPTIONS,
     DEFAULT_ACCOUNT_ITEM,
     getAllCurrencies,
   } from './../../helper/constant'
@@ -29,6 +31,7 @@
   let isUpdate = false
   let isChange = false
   let supportedCurrencys: Currencys[] = []
+  let parentAccountOptions: { name: string; value: string }[] = []
 
   export let action = ''
   export let items = deepClone(DEFAULT_ACCOUNT_ITEM)
@@ -55,6 +58,9 @@
 
   $: isChange = action === ACTION_TYPES.update || action === ACTION_TYPES.change
 
+  // 判断是否为子账户
+  $: isSubAccount = !!items.parent_id
+
   $: localizedRiskArr = ASSETS_RISK_ARR.map((item) => ({
     name: $_(item.key),
     value: item.value,
@@ -65,8 +71,50 @@
     value: item.value,
   }))
 
+  // 父账户只能选择"通用资产"，子账户可以选择所有类型
+  $: localizedAssetTypeArr = isSubAccount
+    ? ASSET_TYPES.map((item) => ({
+        name: $_(`assetTypes.${item.key}`) || item.name,
+        value: item.value,
+      }))
+    : [{ name: $_('assetTypes.generic') || '通用资产', value: 'GENERIC' }]
+
+  // 银行定期计算
+  $: calculatedMaturityDate =
+    items.asset_type === 'BANK_FIXED' && items.start_date && items.term_months
+      ? dayjs(items.start_date).add(items.term_months, 'month').format('YYYY-MM-DD')
+      : ''
+
+  $: calculatedExpectedInterest =
+    items.asset_type === 'BANK_FIXED' && items.principal && items.interest_rate && items.term_months
+      ? (items.principal * (items.interest_rate / 100) * (items.term_months / 12)).toFixed(2)
+      : '0.00'
+
+  // 基金/股票计算
+  $: calculatedAmount =
+    items.asset_type === 'FUND' || items.asset_type === 'STOCK'
+      ? ((items.shares || 0) * (items.nav || 0)).toFixed(2)
+      : items.amount?.toFixed(2) || '0.00'
+
   // tags 本地绑定数组，解决 Svelte 只能绑定到标识符/成员表达式的问题
   let tags: string[] = []
+
+  const fetchParentAccounts = async () => {
+    try {
+      const data = await getParentAccounts()
+      // 添加"无"选项作为默认选项
+      parentAccountOptions = [
+        { name: $_('none') || '无', value: '' },
+        ...data.map((item) => ({
+          name: item.alias || item.type,
+          value: item.type,
+        })),
+      ]
+    } catch (error) {
+      console.error('Error fetching parent accounts:', error)
+      parentAccountOptions = [{ name: $_('none') || '无', value: '' }]
+    }
+  }
 
   onMount(async () => {
     // 初始化（若 items.tags 存在且为字符串）
@@ -76,6 +124,9 @@
         .map((s) => s.trim())
         .filter(Boolean)
     }
+
+    // 获取父账户列表
+    await fetchParentAccounts()
 
     const $targetEl = document.getElementById(MODAL_KEY)
     const options: ModalOptions = {
@@ -124,6 +175,21 @@
 
   const genCurrencyActive = (currency) => {
     return supportedCurrencys.findIndex((item) => item.value === currency)
+  }
+
+  const genAssetTypeActive = (assetType) => {
+    const index = localizedAssetTypeArr.findIndex((item) => item.value === assetType)
+    return index >= 0 ? index : 0
+  }
+
+  const genTermMonthsActive = (termMonths) => {
+    return TERM_MONTHS_OPTIONS.findIndex((item) => item.value === termMonths)
+  }
+
+  const genParentAccountActive = (parentId) => {
+    if (!parentId) return 0
+    const index = parentAccountOptions.findIndex((item) => item.value === parentId)
+    return index >= 0 ? index : 0
   }
 
   const sendUpdateRequest = async () => {
@@ -183,15 +249,54 @@
   }
 
   const handleRiskSelect = (event) => {
+    if (!event.detail?.value) return
     items.risk = event.detail.value
   }
 
   const handleCurrencySelect = (event) => {
+    if (!event.detail?.value) return
     items.currency = event.detail.value
   }
 
   const handleLiquiditySelect = (event) => {
+    if (!event.detail?.value) return
     items.liquidity = event.detail.value
+  }
+
+  const handleAssetTypeSelect = (event) => {
+    if (!event.detail?.value) return
+    items.asset_type = event.detail.value
+    // 切换类型时重置特定字段
+    if (items.asset_type !== 'BANK_FIXED') {
+      items.principal = 0
+      items.interest_rate = 0
+      items.start_date = dayjs().format('YYYY-MM-DD')
+      items.term_months = 12
+    }
+    if (items.asset_type !== 'FUND' && items.asset_type !== 'STOCK') {
+      items.shares = 0
+      items.nav = 0
+      items.code = ''
+    }
+    if (items.asset_type !== 'GENERIC') {
+      items.amount = 0
+    }
+  }
+
+  const handleTermMonthsSelect = (event) => {
+    if (!event.detail?.value) return
+    items.term_months = event.detail.value
+  }
+
+  const handleParentAccountSelect = (event) => {
+    if (!event.detail) return
+    // 空值表示"无"选项
+    items.parent_id = event.detail.value || null
+    // 如果当前资产类型不在新选项中，重置为 GENERIC
+    const willBeSubAccount = !!event.detail.value
+    if (!willBeSubAccount && items.asset_type !== 'GENERIC') {
+      items.asset_type = 'GENERIC'
+    }
   }
 </script>
 
@@ -231,6 +336,35 @@
             placeholder={$_('placeholderOfAlias')}
             required />
         </div>
+
+        <!-- 父账户选择器 -->
+        {#if parentAccountOptions.length > 1}
+          <div class="module-warp">
+            <label for="update-parent-account" class="custom-label">
+              {$_('parentAccount')}
+            </label>
+            <div class="w-full">
+              <CustomSelect
+                options={parentAccountOptions}
+                active={genParentAccountActive(items.parent_id)}
+                listboxClass="w-full"
+                on:selected={handleParentAccountSelect} />
+            </div>
+          </div>
+        {/if}
+
+        <div class="module-warp">
+          <label for="update-asset-type" class="custom-label">
+            {$_('assetType')}
+          </label>
+          <div class="w-full">
+            <CustomSelect
+              options={localizedAssetTypeArr}
+              active={genAssetTypeActive(items.asset_type)}
+              listboxClass="w-full"
+              on:selected={handleAssetTypeSelect} />
+          </div>
+        </div>
         <div class="module-warp">
           <label for="update-currency" class="custom-label">
             {$_('currency')}
@@ -243,45 +377,49 @@
               on:selected={handleCurrencySelect} />
           </div>
         </div>
-        <div class="module-warp">
-          <label for="update-currency" class="custom-label">
-            {$_('risk')}
-          </label>
-          <div class="w-full">
-            <CustomSelect
-              options={localizedRiskArr}
-              active={genRiskActive(items.risk)}
-              listboxClass="w-full"
-              on:selected={handleRiskSelect} />
+
+        <!-- 非子账户才显示风险、流动性、标签 -->
+        {#if !isSubAccount}
+          <div class="module-warp">
+            <label for="update-currency" class="custom-label">
+              {$_('risk')}
+            </label>
+            <div class="w-full">
+              <CustomSelect
+                options={localizedRiskArr}
+                active={genRiskActive(items.risk)}
+                listboxClass="w-full"
+                on:selected={handleRiskSelect} />
+            </div>
           </div>
-        </div>
-        <div class="module-warp">
-          <label for="update-currency" class="custom-label">
-            {$_('liquidity')}
-          </label>
-          <div class="w-full">
-            <CustomSelect
-              options={localizedLiquidityArr}
-              active={genLiquidityActive(items.liquidity)}
-              listboxClass="w-full"
-              on:selected={handleLiquiditySelect} />
+          <div class="module-warp">
+            <label for="update-currency" class="custom-label">
+              {$_('liquidity')}
+            </label>
+            <div class="w-full">
+              <CustomSelect
+                options={localizedLiquidityArr}
+                active={genLiquidityActive(items.liquidity)}
+                listboxClass="w-full"
+                on:selected={handleLiquiditySelect} />
+            </div>
           </div>
-        </div>
-        <div class="module-warp">
-          <label for="update-tags" class="custom-label">
-            {$_('tags')}
-          </label>
-          <InputTag
-            bind:modelValue={tags}
-            placeholder={$_('placeholderOfTags')}
-            max={3}
-            delimiter={','}
-            id="update-tags"
-            tabindex="0"
-            maxlength="50"
-            minlength="0"
-            ariaLabel="tags" />
-        </div>
+          <div class="module-warp">
+            <label for="update-tags" class="custom-label">
+              {$_('tags')}
+            </label>
+            <InputTag
+              bind:modelValue={tags}
+              placeholder={$_('placeholderOfTags')}
+              max={3}
+              delimiter={','}
+              id="update-tags"
+              tabindex="0"
+              maxlength="50"
+              minlength="0"
+              ariaLabel="tags" />
+          </div>
+        {/if}
 
         <div class="inline-flex w-full items-center justify-center pb-4">
           <hr class="my-6 h-px w-full border-0 bg-gray-200" />
@@ -291,19 +429,127 @@
           </span>
         </div>
 
-        <div class="module-warp">
-          <label for="update-amount" class="custom-label">
-            {$_('amount')}
-          </label>
-          <input
-            type="number"
-            step="0.01"
-            id="update-amount"
-            bind:value={items.amount}
-            class="custom-input"
-            placeholder={$_('placeholderOfAmount')}
-            required />
-        </div>
+        {#if items.asset_type === 'BANK_FIXED'}
+          <!-- 银行定期字段 -->
+          <div class="module-warp">
+            <label for="update-principal" class="custom-label">
+              {$_('principal')}
+            </label>
+            <input
+              type="number"
+              step="0.01"
+              id="update-principal"
+              bind:value={items.principal}
+              class="custom-input"
+              placeholder={$_('placeholderOfPrincipal')}
+              required />
+          </div>
+          <div class="module-warp">
+            <label for="update-interest-rate" class="custom-label">
+              {$_('interestRate')} (%)
+            </label>
+            <input
+              type="number"
+              step="0.01"
+              id="update-interest-rate"
+              bind:value={items.interest_rate}
+              class="custom-input"
+              placeholder="3.50"
+              required />
+          </div>
+          <div class="module-warp">
+            <label for="update-start-date" class="custom-label">
+              {$_('startDate')}
+            </label>
+            <input
+              type="text"
+              id="update-start-date"
+              bind:value={items.start_date}
+              class="custom-input"
+              placeholder="YYYY-MM-DD"
+              required />
+          </div>
+          <div class="module-warp">
+            <label for="update-term-months" class="custom-label">
+              {$_('termMonths')}
+            </label>
+            <div class="w-full">
+              <CustomSelect
+                options={TERM_MONTHS_OPTIONS}
+                active={genTermMonthsActive(items.term_months)}
+                listboxClass="w-full"
+                on:selected={handleTermMonthsSelect} />
+            </div>
+          </div>
+          <!-- 计算结果显示 -->
+          <div class="module-warp rounded bg-gray-50 p-3">
+            <div class="text-sm text-gray-600">
+              <p>{$_('maturityDate')}: <span class="font-medium text-gray-900">{calculatedMaturityDate}</span></p>
+              <p>{$_('expectedInterest')}: <span class="font-medium text-gray-900">{calculatedExpectedInterest}</span></p>
+            </div>
+          </div>
+        {:else if items.asset_type === 'FUND' || items.asset_type === 'STOCK'}
+          <!-- 基金/股票字段 -->
+          <div class="module-warp">
+            <label for="update-code" class="custom-label">
+              {$_('code')}
+            </label>
+            <input
+              type="text"
+              id="update-code"
+              bind:value={items.code}
+              class="custom-input"
+              placeholder={$_('placeholderOfCode')}
+              required />
+          </div>
+          <div class="module-warp">
+            <label for="update-shares" class="custom-label">
+              {$_('shares')}
+            </label>
+            <input
+              type="number"
+              step="0.0001"
+              id="update-shares"
+              bind:value={items.shares}
+              class="custom-input"
+              placeholder={$_('placeholderOfShares')}
+              required />
+          </div>
+          <div class="module-warp">
+            <label for="update-nav" class="custom-label">
+              {$_('nav')}
+            </label>
+            <input
+              type="number"
+              step="0.0001"
+              id="update-nav"
+              bind:value={items.nav}
+              class="custom-input"
+              placeholder={$_('placeholderOfNav')}
+              required />
+          </div>
+          <!-- 计算结果显示 -->
+          <div class="module-warp rounded bg-gray-50 p-3">
+            <div class="text-sm text-gray-600">
+              <p>{$_('calculatedAmount')}: <span class="font-medium text-gray-900">{calculatedAmount}</span></p>
+            </div>
+          </div>
+        {:else}
+          <!-- 通用资产金额字段 -->
+          <div class="module-warp">
+            <label for="update-amount" class="custom-label">
+              {$_('amount')}
+            </label>
+            <input
+              type="number"
+              step="0.01"
+              id="update-amount"
+              bind:value={items.amount}
+              class="custom-input"
+              placeholder={$_('placeholderOfAmount')}
+              required />
+          </div>
+        {/if}
         <div class="module-warp">
           <label for="update-datetime" class="custom-label">
             {$_('datetime')}

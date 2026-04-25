@@ -18,15 +18,15 @@
 
   const dispatch = createEventDispatcher()
 
-  let selectedItem: SelectItem = options[active]
+  let selectedItem: SelectItem = options[active] || options[0]
   let selectedItemCopy: SelectItem = deepClone(selectedItem)
 
   /* Make the selected item change according to the system language switch */
   const updateSelectedItem = () => {
-    selectedItem = options.find((item) => item.value === selectedItem?.value)
+    selectedItem = options.find((item) => item.value === selectedItem?.value) || options[0]
   }
 
-  $: if (options) {
+  $: if (options && options.length > 0) {
     updateSelectedItem()
   }
 
@@ -36,6 +36,7 @@
   }
 </script>
 
+{#if options && options.length > 0 && selectedItem}
 <div class="flex items-center justify-center space-x-2 text-gray-600">
   {#if label}
     <label for="custom-select" class="font-medium">{label}</label>
@@ -86,3 +87,4 @@
     </div>
   </Listbox>
 </div>
+{/if}

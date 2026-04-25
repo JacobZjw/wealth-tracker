@@ -6,6 +6,7 @@ import insights from './insights'
 import password from './password'
 import userSettings from './userSettings'
 import customCurrency from './customCurrency'
+import quotes from './quotes'
 import { Assets } from './../models/assets'
 import { Record } from './../models/records'
 
@@ -57,4 +58,5 @@ export default [
   ...password,
   ...userSettings,
   ...customCurrency,
+  ...quotes,
 ]

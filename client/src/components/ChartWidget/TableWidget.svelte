@@ -13,8 +13,9 @@
   import { _ } from 'svelte-i18n'
   import Caption from '../Caption.svelte'
   import confetti from 'canvas-confetti'
-  import { SUPPORTED_CURRENCIES } from './../../helper/constant'
+  import { SUPPORTED_CURRENCIES, ASSET_TYPES } from './../../helper/constant'
   import { randomInRange, convertCurrency, getCurrencySymbol } from './../../helper/utils'
+  import { getSubAccounts } from './../../helper/apis'
   import {
     exchangeRates,
     language,
@@ -34,9 +35,16 @@
     return currency ? $_(`currencys.${currency.value}`, { locale: $language }) : code
   }
 
+  const getAssetTypeName = (assetType) => {
+    const type = ASSET_TYPES.find((item) => item.value === assetType)
+    return type ? $_(`assetTypes.${type.key}`) : ''
+  }
+
   export let options = []
   let typeSortOrder = 'none'
   let sortedOptions = []
+  let expandedParents = new Set()
+  let subAccountsMap = {}
 
   const getTypeLabel = (item) => (item.alias || item.type || '').trim()
   const getSortBucket = (label) => {
@@ -135,6 +143,32 @@
       typeSortOrder = 'none'
     }
   }
+
+  const toggleExpand = async (parentType) => {
+    if (expandedParents.has(parentType)) {
+      expandedParents.delete(parentType)
+      expandedParents = expandedParents
+    } else {
+      expandedParents.add(parentType)
+      expandedParents = expandedParents
+      // 加载子账户
+      if (!subAccountsMap[parentType]) {
+        try {
+          const subAccounts = await getSubAccounts(parentType)
+          subAccountsMap[parentType] = subAccounts
+          subAccountsMap = subAccountsMap
+        } catch (error) {
+          console.error('Error loading sub-accounts:', error)
+          subAccountsMap[parentType] = []
+          subAccountsMap = subAccountsMap
+        }
+      }
+    }
+  }
+
+  const hasSubAccounts = (item) => {
+    return item.sub_account_count > 0
+  }
 </script>
 
 <Card
@@ -167,7 +201,21 @@
     <TableBody tableBodyClass="py-4">
       {#each sortedOptions as item (item.type)}
         <TableBodyRow>
-          <TableBodyCell>{item.alias || item.type}</TableBodyCell>
+          <TableBodyCell>
+            <div class="flex items-center gap-2">
+              {#if hasSubAccounts(item)}
+                <button
+                  type="button"
+                  class="hover:bg-gray-100 rounded p-1 text-gray-500"
+                  on:click={() => toggleExpand(item.type)}>
+                  {expandedParents.has(item.type) ? '▼' : '▶'}
+                </button>
+              {:else}
+                <span class="w-5"></span>
+              {/if}
+              <span>{item.alias || item.type}</span>
+            </div>
+          </TableBodyCell>
           <TableBodyCell>
             <span
               class="text-brand border-brand me-1 inline-flex items-center rounded-sm border bg-yellow-50 px-1 py-0.5 text-xs font-medium">
@@ -199,6 +247,55 @@
             </Button>
           </TableBodyCell>
         </TableBodyRow>
+        <!-- 子账户行 -->
+        {#if expandedParents.has(item.type) && subAccountsMap[item.type]}
+          {#each subAccountsMap[item.type] as subItem (subItem.type)}
+            <TableBodyRow class="bg-gray-50">
+              <TableBodyCell>
+                <div class="flex items-center gap-2 pl-8">
+                  <span class="text-gray-500">└</span>
+                  <span>{subItem.alias || subItem.type}</span>
+                  {#if subItem.asset_type !== 'GENERIC'}
+                    <span class="text-xs text-gray-400">({getAssetTypeName(subItem.asset_type)})</span>
+                  {/if}
+                  {#if subItem.code}
+                    <span class="text-xs text-gray-400">({subItem.code})</span>
+                  {/if}
+                </div>
+              </TableBodyCell>
+              <TableBodyCell>
+                <span
+                  class="text-brand border-brand me-1 inline-flex items-center rounded-sm border bg-yellow-50 px-1 py-0.5 text-xs font-medium">
+                  {getCurrencySymbol(subItem.currency, $customCurrencies)}
+                </span>
+                {subItem.amount}
+              </TableBodyCell>
+              <TableBodyCell>{getCurrencyName(subItem.currency)}</TableBodyCell>
+              <TableBodyCell>
+                <Button
+                  size="sm"
+                  outline
+                  class="border-none focus:ring-0"
+                  on:click={() => {
+                    onUpdateClick(subItem)
+                  }}>
+                  <span class="hover:text-brand text-mark">{$_('update')}</span>
+                </Button>
+              </TableBodyCell>
+              <TableBodyCell>
+                <Button
+                  size="sm"
+                  outline
+                  class="border-none focus:ring-0"
+                  on:click={() => {
+                    onDestroyClick(subItem)
+                  }}>
+                  <span class="hover:text-brand text-mark">{$_('destroy')}</span>
+                </Button>
+              </TableBodyCell>
+            </TableBodyRow>
+          {/each}
+        {/if}
       {/each}
       <TableBodyRow>
         <TableBodyCell>

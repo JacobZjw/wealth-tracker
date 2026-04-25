@@ -43,6 +43,24 @@ export const ASSETS_LIQUIDITY_ARR = LIQUIDITY_TYPES.map((value) => ({
   value: value,
 }))
 
+// 资产类型选项
+export const ASSET_TYPES = [
+  { key: 'generic', value: 'GENERIC', name: '通用资产' },
+  { key: 'bankFixed', value: 'BANK_FIXED', name: '银行定期' },
+  { key: 'fund', value: 'FUND', name: '基金' },
+  { key: 'stock', value: 'STOCK', name: '股票' },
+]
+
+// 定期存款期限选项（月）
+export const TERM_MONTHS_OPTIONS = [
+  { name: '3个月', value: 3 },
+  { name: '6个月', value: 6 },
+  { name: '12个月', value: 12 },
+  { name: '24个月', value: 24 },
+  { name: '36个月', value: 36 },
+  { name: '60个月', value: 60 },
+]
+
 export const DEFAULT_ACCOUNT_ITEM = {
   type: Date.now().toString(),
   alias: '',
@@ -52,6 +70,15 @@ export const DEFAULT_ACCOUNT_ITEM = {
   amount: 0,
   datetime: dayjs().format('YYYY-MM-DD'),
   note: '',
+  asset_type: 'GENERIC',
+  principal: 0,
+  interest_rate: 0,
+  start_date: dayjs().format('YYYY-MM-DD'),
+  term_months: 12,
+  shares: 0,
+  nav: 0,
+  parent_id: null,
+  code: '',
 }
 
 export const SOCIAL_LINKS = [

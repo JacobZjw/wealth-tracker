@@ -54,6 +54,124 @@ const addTagsColumnToRecordIfNotExists = async () => {
   }
 }
 
+const addAssetTypeFieldsToAssetsIfNotExists = async () => {
+  if (!sequelize) {
+    return
+  }
+
+  const columnsToAdd = [
+    { name: 'asset_type', sql: "ALTER TABLE assets ADD COLUMN asset_type TEXT DEFAULT 'GENERIC'" },
+    { name: 'principal', sql: 'ALTER TABLE assets ADD COLUMN principal DECIMAL(15, 2)' },
+    { name: 'interest_rate', sql: 'ALTER TABLE assets ADD COLUMN interest_rate DECIMAL(5, 4)' },
+    { name: 'start_date', sql: 'ALTER TABLE assets ADD COLUMN start_date DATE' },
+    { name: 'term_months', sql: 'ALTER TABLE assets ADD COLUMN term_months INTEGER' },
+    { name: 'maturity_date', sql: 'ALTER TABLE assets ADD COLUMN maturity_date DATE' },
+    { name: 'expected_interest', sql: 'ALTER TABLE assets ADD COLUMN expected_interest DECIMAL(15, 2)' },
+    { name: 'shares', sql: 'ALTER TABLE assets ADD COLUMN shares DECIMAL(15, 4)' },
+    { name: 'nav', sql: 'ALTER TABLE assets ADD COLUMN nav DECIMAL(10, 4)' },
+  ]
+
+  try {
+    const [results] = await sequelize.query('PRAGMA table_info(assets)')
+    const existingColumns = results.map((row: any) => row.name)
+
+    for (const col of columnsToAdd) {
+      if (!existingColumns.includes(col.name)) {
+        console.log(`Adding ${col.name} column to assets table...`)
+        await sequelize.query(col.sql)
+        console.log(`✅ ${col.name} column added to assets table!`)
+      }
+    }
+  } catch (err) {
+    console.error('Error adding asset type columns to assets table:', err)
+  }
+}
+
+const addAssetTypeFieldsToRecordIfNotExists = async () => {
+  if (!sequelize) {
+    return
+  }
+
+  const columnsToAdd = [
+    { name: 'asset_type', sql: "ALTER TABLE record ADD COLUMN asset_type TEXT DEFAULT 'GENERIC'" },
+    { name: 'principal', sql: 'ALTER TABLE record ADD COLUMN principal DECIMAL(15, 2)' },
+    { name: 'interest_rate', sql: 'ALTER TABLE record ADD COLUMN interest_rate DECIMAL(5, 4)' },
+    { name: 'start_date', sql: 'ALTER TABLE record ADD COLUMN start_date DATE' },
+    { name: 'term_months', sql: 'ALTER TABLE record ADD COLUMN term_months INTEGER' },
+    { name: 'maturity_date', sql: 'ALTER TABLE record ADD COLUMN maturity_date DATE' },
+    { name: 'expected_interest', sql: 'ALTER TABLE record ADD COLUMN expected_interest DECIMAL(15, 2)' },
+    { name: 'shares', sql: 'ALTER TABLE record ADD COLUMN shares DECIMAL(15, 4)' },
+    { name: 'nav', sql: 'ALTER TABLE record ADD COLUMN nav DECIMAL(10, 4)' },
+  ]
+
+  try {
+    const [results] = await sequelize.query('PRAGMA table_info(record)')
+    const existingColumns = results.map((row: any) => row.name)
+
+    for (const col of columnsToAdd) {
+      if (!existingColumns.includes(col.name)) {
+        console.log(`Adding ${col.name} column to record table...`)
+        await sequelize.query(col.sql)
+        console.log(`✅ ${col.name} column added to record table!`)
+      }
+    }
+  } catch (err) {
+    console.error('Error adding asset type columns to record table:', err)
+  }
+}
+
+const addSubAccountFieldsToAssetsIfNotExists = async () => {
+  if (!sequelize) {
+    return
+  }
+
+  const columnsToAdd = [
+    { name: 'parent_id', sql: 'ALTER TABLE assets ADD COLUMN parent_id TEXT' },
+    { name: 'code', sql: 'ALTER TABLE assets ADD COLUMN code TEXT' },
+  ]
+
+  try {
+    const [results] = await sequelize.query('PRAGMA table_info(assets)')
+    const existingColumns = results.map((row: any) => row.name)
+
+    for (const col of columnsToAdd) {
+      if (!existingColumns.includes(col.name)) {
+        console.log(`Adding ${col.name} column to assets table...`)
+        await sequelize.query(col.sql)
+        console.log(`✅ ${col.name} column added to assets table!`)
+      }
+    }
+  } catch (err) {
+    console.error('Error adding sub-account columns to assets table:', err)
+  }
+}
+
+const addSubAccountFieldsToRecordIfNotExists = async () => {
+  if (!sequelize) {
+    return
+  }
+
+  const columnsToAdd = [
+    { name: 'parent_id', sql: 'ALTER TABLE record ADD COLUMN parent_id TEXT' },
+    { name: 'code', sql: 'ALTER TABLE record ADD COLUMN code TEXT' },
+  ]
+
+  try {
+    const [results] = await sequelize.query('PRAGMA table_info(record)')
+    const existingColumns = results.map((row: any) => row.name)
+
+    for (const col of columnsToAdd) {
+      if (!existingColumns.includes(col.name)) {
+        console.log(`Adding ${col.name} column to record table...`)
+        await sequelize.query(col.sql)
+        console.log(`✅ ${col.name} column added to record table!`)
+      }
+    }
+  } catch (err) {
+    console.error('Error adding sub-account columns to record table:', err)
+  }
+}
+
 const connectToSqlite = async () => {
   if (!sequelize) {
     throw new Error('Sequelize has not been initialized.')
@@ -64,7 +182,15 @@ const connectToSqlite = async () => {
     await sequelize.sync()
     await addTagsColumnToAssetsIfNotExists()
     await addTagsColumnToRecordIfNotExists()
+    await addAssetTypeFieldsToAssetsIfNotExists()
+    await addAssetTypeFieldsToRecordIfNotExists()
+    await addSubAccountFieldsToAssetsIfNotExists()
+    await addSubAccountFieldsToRecordIfNotExists()
     console.log('🎊 Database synced!')
+
+    // 启动定期存款到期调度器
+    const { startMaturityScheduler } = await import('./scheduler/maturity')
+    startMaturityScheduler()
   } catch (err) {
     console.error('Failed to sync database:', err)
     throw err

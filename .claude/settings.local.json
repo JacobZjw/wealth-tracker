@@ -1,0 +1,34 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(pnpm i *)",
+      "Bash(yarn install *)",
+      "Bash(yarn dev *)",
+      "Bash(node ../node_modules/tsx/dist/cli.mjs watch src/index.ts)",
+      "Bash(netstat -ano)",
+      "Bash(findstr :8888)",
+      "Bash(tasklist)",
+      "Bash(findstr node *)",
+      "Bash(powershell Get-NetTCPConnection -LocalPort 8888 -ErrorAction SilentlyContinue | Select-Object OwningProcess *)",
+      "Bash(powershell *)",
+      "Bash(findstr \"0.0.0.0:8888\")",
+      "Bash(npx --yes tsx watch src/index.ts)",
+      "Bash(npm install *)",
+      "Bash(npx tsx *)",
+      "Bash(node *)",
+      "Bash(curl -s http://localhost:8888/)",
+      "Bash(yarn workspace *)",
+      "Bash(npm cache *)",
+      "Bash(npx clear-npx-cache *)",
+      "Bash(curl -s http://localhost:8888/api/assets)",
+      "Bash(sqlite3 *)",
+      "Bash(curl *)",
+      "Bash(taskkill *)",
+      "Bash(awk '{print $5}')",
+      "Bash(pnpm install *)",
+      "Bash(powershell -Command \"Get-Process -Name node -ErrorAction SilentlyContinue | Stop-Process -Force\")",
+      "Bash(curl -s http://localhost:8888/api/quotes/stock/600519)"
+    ]
+  }
+}

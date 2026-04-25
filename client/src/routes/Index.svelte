@@ -180,7 +180,7 @@
 </div>
 
 <div class="flex w-full flex-col items-center justify-center space-y-8">
-  <OperatingArea on:add={handleAdd} />
+  <OperatingArea on:add={handleAdd} on:refresh={fetchDatabase} />
   <TableWidget
     options={rawAssetsArr}
     on:update={handleUpate}

@@ -2,6 +2,9 @@ version: '3.8'
 
 services:
   wealth-tracker:
+    build:
+      context: .
+      dockerfile: Dockerfile
     image: nicejade/wealth-tracker
     container_name: wealth-tracker
     ports:

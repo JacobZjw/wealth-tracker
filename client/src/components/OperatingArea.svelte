@@ -4,10 +4,11 @@
   import SvgIcon from './SvgIcon.svelte'
   import CustomSelect from './Select.svelte'
   import SettingModal from './Modal/Setting.svelte'
-  import { language, targetCurrencyCode, targetCurrencyName } from './../stores'
+  import { language, targetCurrencyCode, targetCurrencyName, alert } from './../stores'
   import { getStoredCurrency, setStoredCurrency } from './../helper/utils'
   import { saveUserSettings } from './../helper/settings'
   import { SUPPORTED_CURRENCIES } from './../helper/constant'
+  import { updateAllStockNav, updateAllFundNav } from './../helper/apis'
 
   type Currencys = {
     name?: string
@@ -16,6 +17,7 @@
 
   const dispatch = createEventDispatcher()
   let isShowSetting: boolean = false
+  let isUpdatingNav: boolean = false
   let currencyActive: number = SUPPORTED_CURRENCIES.findIndex(
     (currency) => currency.value === getStoredCurrency(),
   )
@@ -102,6 +104,35 @@
   const handleSettingClose = () => {
     isShowSetting = false
   }
+
+  const onUpdateNavClick = async () => {
+    if (isUpdatingNav) return
+    isUpdatingNav = true
+
+    try {
+      const [stockResult, fundResult] = await Promise.all([
+        updateAllStockNav(),
+        updateAllFundNav(),
+      ])
+
+      const totalUpdated = (stockResult.updated || 0) + (fundResult.updated || 0)
+      const totalFailed = (stockResult.total || 0) + (fundResult.total || 0) - totalUpdated
+
+      if (totalUpdated > 0) {
+        alert.set($_('navUpdateSuccess', { values: { count: totalUpdated } }))
+        dispatch('refresh')
+      } else if (totalFailed === 0) {
+        alert.set($_('noStockOrFund'))
+      } else {
+        alert.set($_('navUpdateFailed'))
+      }
+    } catch (error) {
+      console.error('Update NAV error:', error)
+      alert.set($_('navUpdateFailed'))
+    } finally {
+      isUpdatingNav = false
+    }
+  }
 </script>
 
 <div
@@ -123,6 +154,13 @@
       <SvgIcon name="edit" />
       <strong class="operating-text">{$_('insightsNav')}</strong>
     </a>
+    <button
+      class="operating-btn focus-visible-ring"
+      disabled={isUpdatingNav}
+      on:click={onUpdateNavClick}>
+      <SvgIcon name="refresh" />
+      <strong class="operating-text">{isUpdatingNav ? $_('updating') : $_('updateNav')}</strong>
+    </button>
   </div>
   <div class="flex items-center space-x-4 md:w-full md:justify-between md:space-x-0">
     <CustomSelect
