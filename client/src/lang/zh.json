@@ -187,6 +187,8 @@
   "navUpdateSuccess": "成功更新 {count} 项资产净值",
   "navUpdateFailed": "净值更新失败，请稍后重试",
   "noStockOrFund": "没有需要更新净值的股票或基金",
+  "parentAmountMismatch": "父账户「{alias}」金额不一致：父账户 {parentAmount}，子账户汇总 {subAccountsTotal}，差额 {difference}",
+  "parentAmountMismatchTitle": "发现 {count} 个父账户金额不一致",
   "insights": {
     "title": "财富见解",
     "addInsight": "新增见解",

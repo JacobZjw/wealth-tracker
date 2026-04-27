@@ -1,4 +1,4 @@
-import { create, get, update, destroy, getSubAccounts, getParentAccounts } from '../controllers/assets'
+import { create, get, update, destroy, getSubAccounts, getParentAccounts, validateAndFixParentAmounts } from '../controllers/assets'
 
 export default [
   {
@@ -15,6 +15,11 @@ export default [
     method: 'GET',
     url: '/api/assets/parents',
     handler: getParentAccounts,
+  },
+  {
+    method: 'GET',
+    url: '/api/assets/validate',
+    handler: validateAndFixParentAmounts,
   },
   {
     method: 'GET',

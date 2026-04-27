@@ -187,6 +187,8 @@
   "navUpdateSuccess": "Successfully updated {count} asset(s) NAV",
   "navUpdateFailed": "Failed to update NAV, please try again",
   "noStockOrFund": "No stocks or funds to update",
+  "parentAmountMismatch": "Parent account \"{alias}\" amount mismatch: parent {parentAmount}, sub-accounts total {subAccountsTotal}, difference {difference}",
+  "parentAmountMismatchTitle": "Found {count} parent account(s) with amount mismatch",
   "insights": {
     "title": "Wealth Insights",
     "addInsight": "Add Insight",

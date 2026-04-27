@@ -8,7 +8,7 @@
   import { getStoredCurrency, setStoredCurrency } from './../helper/utils'
   import { saveUserSettings } from './../helper/settings'
   import { SUPPORTED_CURRENCIES } from './../helper/constant'
-  import { updateAllStockNav, updateAllFundNav } from './../helper/apis'
+  import { updateAllStockNav, updateAllFundNav, validateAndFixParentAmounts } from './../helper/apis'
 
   type Currencys = {
     name?: string
@@ -120,12 +120,16 @@
 
       if (totalUpdated > 0) {
         alert.set($_('navUpdateSuccess', { values: { count: totalUpdated } }))
-        dispatch('refresh')
       } else if (totalFailed === 0) {
         alert.set($_('noStockOrFund'))
       } else {
         alert.set($_('navUpdateFailed'))
       }
+
+      // 验证并修复父账户金额
+      await validateAndFixParentAmounts()
+
+      dispatch('refresh')
     } catch (error) {
       console.error('Update NAV error:', error)
       alert.set($_('navUpdateFailed'))

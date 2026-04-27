@@ -24,6 +24,10 @@ export const getSubAccounts = (parentId: string) => {
   return $ajax.get(genApiPath(`assets/${parentId}/subaccounts`), {})
 }
 
+export const validateAndFixParentAmounts = () => {
+  return $ajax.get(genApiPath('assets/validate'), {})
+}
+
 export const updateAssets = (data) => {
   return $ajax.put(genApiPath('assets'), data)
 }

@@ -25,6 +25,62 @@ const calculateAmount = (assetType: string, params: any): number => {
   }
 }
 
+// 检查并修复父账户金额
+export const validateAndFixParentAmounts = async (_, reply) => {
+  try {
+    // 获取所有父账户（有子账户的账户）
+    const parentAccounts = await Assets.findAll({
+      where: { parent_id: null as unknown as string },
+    })
+
+    const fixed: Array<{
+      type: string
+      alias: string
+      oldAmount: number
+      newAmount: number
+    }> = []
+
+    for (const parent of parentAccounts) {
+      const subAccounts = await Assets.findAll({
+        where: { parent_id: parent.type },
+      })
+
+      if (subAccounts.length === 0) continue
+
+      const subAccountsTotal = subAccounts.reduce((sum: number, acc: any) => {
+        return sum + Number(acc.amount || 0)
+      }, 0)
+
+      const parentAmount = Number(parent.amount || 0)
+      const difference = Math.abs(parentAmount - subAccountsTotal)
+
+      // 允许 0.01 的误差（浮点数精度问题）
+      if (difference > 0.01) {
+        await Assets.update(
+          { amount: subAccountsTotal, updated: new Date() },
+          { where: { type: parent.type } },
+        )
+
+        fixed.push({
+          type: parent.type,
+          alias: parent.alias || parent.type,
+          oldAmount: parentAmount,
+          newAmount: subAccountsTotal,
+        })
+      }
+    }
+
+    return reply.send({
+      fixed,
+    })
+  } catch (error: any) {
+    return reply.code(400).send({
+      statusCode: 400,
+      message: error.message,
+    })
+  }
+}
+
 // 重新计算父账户金额
 export const recalculateParentAmount = async (parentId: string) => {
   if (!parentId) return
