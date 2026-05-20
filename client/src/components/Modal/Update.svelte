@@ -461,7 +461,7 @@ s  }
               {$_('startDate')}
             </label>
             <input
-              type="text"
+              type="date"
               id="update-start-date"
               bind:value={items.start_date}
               class="custom-input"
@@ -555,12 +555,11 @@ s  }
           </label>
           <div class="w-full">
             <input
-              type="text"
+              type="date"
               id="update-datetime"
               bind:value={items.datetime}
               class="custom-input"
-              placeholder={$_('placeholderOfDate')}
-              on:input={() => validateDatetimeInput(items)}
+              max={dayjs().format('YYYY-MM-DD')}
               required />
             {#if datetimeError}
               <p class="text-mark text-sm">{datetimeError}</p>

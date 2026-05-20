@@ -30,7 +30,10 @@
       "Bash(powershell -Command \"Get-Process -Name node -ErrorAction SilentlyContinue | Stop-Process -Force\")",
       "Bash(curl -s http://localhost:8888/api/quotes/stock/600519)",
       "Bash(yarn build *)",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(PORT=8889 node *)",
+      "Bash(netsh interface *)",
+      "Bash(PORT=8888 node dist/index.js)"
     ]
   }
 }

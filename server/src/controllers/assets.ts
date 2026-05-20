@@ -1,5 +1,6 @@
 import { Assets } from './../models/assets'
 import { Record } from './../models/records'
+import { getMergedExchangeRates, convertCurrency } from '../helper/exchangeRate'
 import dayjs from 'dayjs'
 
 // 计算到期日期
@@ -25,9 +26,11 @@ const calculateAmount = (assetType: string, params: any): number => {
   }
 }
 
-// 检查并修复父账户金额
+// 检查并修复父账户金额（考虑汇率转换）
 export const validateAndFixParentAmounts = async (_, reply) => {
   try {
+    const rates = await getMergedExchangeRates()
+
     // 获取所有父账户（有子账户的账户）
     const parentAccounts = await Assets.findAll({
       where: { parent_id: null as unknown as string },
@@ -47,8 +50,12 @@ export const validateAndFixParentAmounts = async (_, reply) => {
 
       if (subAccounts.length === 0) continue
 
+      const parentCurrency = parent.currency || 'CNY'
       const subAccountsTotal = subAccounts.reduce((sum: number, acc: any) => {
-        return sum + Number(acc.amount || 0)
+        const subCurrency = acc.currency || 'CNY'
+        const amount = Number(acc.amount || 0)
+        const convertedAmount = convertCurrency(amount, subCurrency, parentCurrency, rates)
+        return sum + convertedAmount
       }, 0)
 
       const parentAmount = Number(parent.amount || 0)
@@ -81,16 +88,25 @@ export const validateAndFixParentAmounts = async (_, reply) => {
   }
 }
 
-// 重新计算父账户金额
+// 重新计算父账户金额（考虑汇率转换）
 export const recalculateParentAmount = async (parentId: string) => {
   if (!parentId) return
+
+  const parent = await Assets.findByPk(parentId)
+  if (!parent) return
+
+  const parentCurrency = parent.currency || 'CNY'
+  const rates = await getMergedExchangeRates()
 
   const subAccounts = await Assets.findAll({
     where: { parent_id: parentId },
   })
 
   const totalAmount = subAccounts.reduce((sum: number, acc: any) => {
-    return sum + Number(acc.amount || 0)
+    const subCurrency = acc.currency || 'CNY'
+    const amount = Number(acc.amount || 0)
+    const convertedAmount = convertCurrency(amount, subCurrency, parentCurrency, rates)
+    return sum + convertedAmount
   }, 0)
 
   await Assets.update(

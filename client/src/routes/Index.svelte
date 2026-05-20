@@ -87,7 +87,11 @@
   }
 
   const handleUpate = (event) => {
-    currentAssetItem = event.detail
+    currentAssetItem = {
+      ...event.detail,
+      rawDatetime: event.detail.datetime,
+      datetime: dayjs().format('YYYY-MM-DD'),
+    }
     updateActionType = ACTION_TYPES.update
     isShowUpdateModal = true
     trackEvent('asset-update-click', { asset_type: currentAssetItem.type })
