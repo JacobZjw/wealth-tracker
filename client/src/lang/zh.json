@@ -177,7 +177,7 @@
   "placeholderOfPrincipal": "请填写本金金额",
   "placeholderOfShares": "请填写持有份额",
   "placeholderOfNav": "请填写当前净值",
-  "placeholderOfCode": "请填写代码，如 600519",
+  "placeholderOfCode": "A股如600519，港股如00700，美股如AAPL",
   "parentAccount": "父账户",
   "code": "代码",
   "none": "无",

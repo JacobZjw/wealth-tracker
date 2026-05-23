@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from 'svelte'
+  import { onMount, onDestroy } from 'svelte'
   import { _ } from 'svelte-i18n'
   import Header from '../components/Header.svelte'
   import Footer from '../components/Footer.svelte'

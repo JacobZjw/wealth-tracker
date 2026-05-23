@@ -33,7 +33,8 @@
       "Bash(npx tsc *)",
       "Bash(PORT=8889 node *)",
       "Bash(netsh interface *)",
-      "Bash(PORT=8888 node dist/index.js)"
+      "Bash(PORT=8888 node dist/index.js)",
+      "Bash(pnpm *)"
     ]
   }
 }

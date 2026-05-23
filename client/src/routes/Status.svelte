@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from 'svelte'
+  import { onMount, onDestroy } from 'svelte'
   import { _ } from 'svelte-i18n'
   import { CardPlaceholder } from 'flowbite-svelte'
   import Header from '../components/Header.svelte'
@@ -29,6 +29,18 @@
 
     fetchExchangeRates()
     fetchDatabase()
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+  })
+
+  const handleVisibilityChange = () => {
+    if (!document.hidden) {
+      fetchDatabase()
+    }
+  }
+
+  onDestroy(() => {
+    document.removeEventListener('visibilitychange', handleVisibilityChange)
   })
 
   const fetchDatabase = async () => {

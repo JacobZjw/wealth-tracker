@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from 'svelte'
+  import { onMount, onDestroy } from 'svelte'
   import dayjs from 'dayjs'
   import { _ } from 'svelte-i18n'
   import { Modal } from 'flowbite-svelte'
@@ -54,6 +54,18 @@
 
     fetchExchangeRates()
     fetchDatabase()
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+  })
+
+  const handleVisibilityChange = () => {
+    if (!document.hidden) {
+      fetchDatabase()
+    }
+  }
+
+  onDestroy(() => {
+    document.removeEventListener('visibilitychange', handleVisibilityChange)
   })
 
   const fetchDatabase = async () => {
@@ -111,6 +123,7 @@
 
   const handleUpdateConfirm = () => {
     fetchDatabase()
+    isShowUpdateModal = false
     trackEvent('asset-update-confirm', { action_type: updateActionType })
   }
 

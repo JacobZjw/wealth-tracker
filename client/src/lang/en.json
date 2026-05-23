@@ -177,7 +177,7 @@
   "placeholderOfPrincipal": "Please enter the principal amount",
   "placeholderOfShares": "Please enter the number of shares",
   "placeholderOfNav": "Please enter the current NAV",
-  "placeholderOfCode": "Please enter the code, e.g. 600519",
+  "placeholderOfCode": "A-stock: 600519, HK: 00700, US: AAPL",
   "parentAccount": "Parent Account",
   "code": "Code",
   "none": "None",

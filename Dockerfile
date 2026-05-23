@@ -17,6 +17,5 @@ EXPOSE 8888
 
 # Define database file path
 VOLUME ["/app/data"]
-
 # Auto exec Bun APP
 CMD ["bun", "dist/index.js"]

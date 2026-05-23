@@ -6,6 +6,7 @@ import { recalculateParentAmount } from './assets'
 interface StockQuote {
   price: number | null
   name: string | null
+  currency?: string
 }
 
 interface FundQuote {
@@ -26,8 +27,23 @@ interface QuoteResult {
   message?: string
 }
 
-// 腾讯股票API获取股票实时价格和名称
-const fetchStockQuote = async (code: string): Promise<StockQuote> => {
+type StockMarket = 'A' | 'HK' | 'US'
+
+const getStockMarket = (code: string): StockMarket => {
+  // 美股：字母符号（如AAPL）
+  if (/^[A-Za-z]+$/.test(code)) {
+    return 'US'
+  }
+  // 港股：5位数字
+  if (/^\d{5}$/.test(code)) {
+    return 'HK'
+  }
+  // A股：6位数字
+  return 'A'
+}
+
+// 腾讯股票API获取A股实时价格和名称
+const fetchAStockQuote = async (code: string): Promise<StockQuote> => {
   try {
     // 判断股票代码属于上交所还是深交所
     let market = 'sh'
@@ -53,15 +69,89 @@ const fetchStockQuote = async (code: string): Promise<StockQuote> => {
         const name = parts[1] || null
         const price = parseFloat(parts[3])
         if (!isNaN(price)) {
-          return { price, name }
+          return { price, name, currency: 'CNY' }
         }
       }
     }
 
-    return { price: null, name: null }
+    return { price: null, name: null, currency: 'CNY' }
   } catch (error) {
-    console.error(`获取股票 ${code} 信息失败:`, error)
-    return { price: null, name: null }
+    console.error(`获取A股 ${code} 信息失败:`, error)
+    return { price: null, name: null, currency: 'CNY' }
+  }
+}
+
+// 腾讯股票API获取港股实时价格和名称
+const fetchHKStockQuote = async (code: string): Promise<StockQuote> => {
+  try {
+    // 港股代码需要在前面加0
+    const url = `http://qt.gtimg.cn/q=hk${code}`
+    const response = await axios.get(url, {
+      timeout: 5000,
+      responseType: 'arraybuffer',
+    })
+
+    // 使用 iconv-lite 解码 GBK 编码
+    const data = iconv.decode(Buffer.from(response.data), 'gbk')
+
+    // 格式: v_hk00700="1~腾讯控股~00700~350.00~..."
+    const match = data.match(/="([^"]+)"/)
+    if (match && match[1]) {
+      const parts = match[1].split('~')
+      if (parts.length >= 4) {
+        // parts[1]: 股票名称, parts[3]: 当前价格（港币）
+        const name = parts[1] || null
+        const price = parseFloat(parts[3])
+        if (!isNaN(price)) {
+          return { price, name, currency: 'HKD' }
+        }
+      }
+    }
+
+    return { price: null, name: null, currency: 'HKD' }
+  } catch (error) {
+    console.error(`获取港股 ${code} 信息失败:`, error)
+    return { price: null, name: null, currency: 'HKD' }
+  }
+}
+
+// 使用Yahoo Finance API获取美股实时价格和名称
+const fetchUSStockQuote = async (code: string): Promise<StockQuote> => {
+  try {
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${code}`
+    const response = await axios.get(url, {
+      timeout: 5000,
+    })
+
+    const data = response.data
+    if (data.chart && data.chart.result && data.chart.result[0]) {
+      const result = data.chart.result[0]
+      const price = result.meta.regularMarketPrice || result.meta.previousClose
+      const name = result.meta.shortName || result.meta.symbol
+
+      if (price) {
+        return { price, name, currency: 'USD' }
+      }
+    }
+
+    return { price: null, name: null, currency: 'USD' }
+  } catch (error) {
+    console.error(`获取美股 ${code} 信息失败:`, error)
+    return { price: null, name: null, currency: 'USD' }
+  }
+}
+
+// 获取股票实时价格和名称（支持A股、港股、美股）
+const fetchStockQuote = async (code: string): Promise<StockQuote> => {
+  const market = getStockMarket(code)
+
+  switch (market) {
+    case 'HK':
+      return fetchHKStockQuote(code)
+    case 'US':
+      return fetchUSStockQuote(code)
+    default:
+      return fetchAStockQuote(code)
   }
 }
 
@@ -116,6 +206,7 @@ export const getStockPrice = async (request, reply) => {
       code,
       price: quote.price,
       name: quote.name,
+      currency: quote.currency,
       updateTime: new Date().toISOString(),
     })
   } catch (error: any) {
@@ -152,11 +243,12 @@ export const updateAllStockNav = async (_, reply) => {
       const quote = await fetchStockQuote(stock.code)
 
       if (quote.price !== null) {
-        // 更新净值、金额和名称
+        // 更新净值、金额、名称和货币
         const newAmount = Number(stock.shares) * quote.price
         const updateData: any = {
           nav: quote.price,
           amount: newAmount,
+          currency: quote.currency || stock.currency,
           updated: new Date(),
         }
 
